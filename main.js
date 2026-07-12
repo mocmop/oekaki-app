@@ -56,6 +56,34 @@ function patternInk(x, y) {
   }
 }
 
+// ペン用：現在の模様＋色で「くり返しタイル」を作る（隙間は透明）。
+// バケツの patternInk と同じ幾何・同じ原点基準なので見た目が揃う。
+function buildPatternTile() {
+  const dpr = window.devicePixelRatio || 1;
+  let period;
+  switch (currentPattern) {
+    case 'dots':    period = Math.max(6, Math.round(18 * dpr)); break;
+    case 'stripes': period = 2 * Math.max(3, Math.round(10 * dpr)); break;
+    case 'check':   period = 2 * Math.max(4, Math.round(16 * dpr)); break;
+    default: return null; // solid
+  }
+  const t = document.createElement('canvas');
+  t.width = period; t.height = period;
+  const tctx = t.getContext('2d');
+  const img = tctx.createImageData(period, period);
+  const d = img.data;
+  const [r, g, b] = currentColor;
+  for (let y = 0; y < period; y++) {
+    for (let x = 0; x < period; x++) {
+      const p = (y * period + x) * 4;
+      if (patternInk(x, y)) { d[p] = r; d[p + 1] = g; d[p + 2] = b; d[p + 3] = 255; }
+      // それ以外は透明（alpha 0 のまま）
+    }
+  }
+  tctx.putImageData(img, 0, 0);
+  return t;
+}
+
 // キャンバスの実ピクセルサイズ（= CSS px * dpr）
 let W = 0;
 let H = 0;
@@ -447,6 +475,19 @@ function strokeWidth() {
   return strokeWidthCss * (window.devicePixelRatio || 1);
 }
 
+// このストロークで使う模様パターン（solid や けしごむ の時は null）
+let strokePattern = null;
+
+// ストローク開始時に一度だけ模様パターンを用意する（毎moveの再生成を避ける）
+function prepareStroke() {
+  if (mode === 'pen' && currentPattern !== 'solid') {
+    const tile = buildPatternTile();
+    strokePattern = tile ? colorCtx.createPattern(tile, 'repeat') : null;
+  } else {
+    strokePattern = null;
+  }
+}
+
 // ペン/けしごむのストローク設定。けしごむは destination-out で透明に消す。
 function applyStrokeStyle() {
   colorCtx.lineWidth = strokeWidth();
@@ -458,9 +499,14 @@ function applyStrokeStyle() {
     colorCtx.fillStyle   = 'rgba(0,0,0,1)';
   } else {
     colorCtx.globalCompositeOperation = 'source-over';
-    const [r, g, b] = currentColor;
-    colorCtx.strokeStyle = `rgb(${r},${g},${b})`;
-    colorCtx.fillStyle   = `rgb(${r},${g},${b})`;
+    if (strokePattern) {
+      colorCtx.strokeStyle = strokePattern;
+      colorCtx.fillStyle   = strokePattern;
+    } else {
+      const [r, g, b] = currentColor;
+      colorCtx.strokeStyle = `rgb(${r},${g},${b})`;
+      colorCtx.fillStyle   = `rgb(${r},${g},${b})`;
+    }
   }
 }
 
@@ -478,6 +524,7 @@ lineLayer.addEventListener('pointerdown', (e) => {
   drawing = true;
   const [x, y] = toPixelF(e.clientX, e.clientY);
   lastX = x; lastY = y;
+  prepareStroke();      // 模様パターンを用意（このストローク中は固定）
   applyStrokeStyle();
   colorCtx.beginPath();
   colorCtx.arc(x, y, strokeWidth() / 2, 0, Math.PI * 2);
