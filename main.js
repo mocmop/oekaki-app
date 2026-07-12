@@ -637,6 +637,9 @@ const picker      = document.getElementById('picker');
 const pickerPanel = picker.querySelector('.picker-panel');
 const pickBtn     = document.getElementById('pickBtn');
 
+// 最初の1枚を選ぶまでは true にならない（起動時の選択画面制御）
+let started = false;
+
 // list.json が無い/読めない時のフォールバック
 const FALLBACK_IMAGES = ['fish.svg', 'car.svg', 'star.svg', 'flower.svg'];
 
@@ -645,9 +648,9 @@ pickBtn.addEventListener('pointerdown', (e) => {
   picker.hidden = false;
 });
 
-// 背景（パネル外）タップで閉じる
+// 背景（パネル外）タップで閉じる。ただし最初の選択前は閉じさせない。
 picker.addEventListener('pointerdown', (e) => {
-  if (e.target === picker) picker.hidden = true;
+  if (e.target === picker && started) picker.hidden = true;
 });
 
 // images/list.json を読む（配列。要素はファイル名 or {file} オブジェクト）
@@ -682,6 +685,7 @@ function buildPicker(files) {
     pickerPanel.querySelectorAll('.pick').forEach(b => b.classList.remove('is-selected'));
     blankBtn.classList.add('is-selected');
     picker.hidden = true;
+    started = true;
     if (currentSvgPath !== null) {
       currentSvgPath = null;
       await switchImage(null);
@@ -707,6 +711,7 @@ function buildPicker(files) {
       pickerPanel.querySelectorAll('.pick').forEach(b => b.classList.remove('is-selected'));
       btn.classList.add('is-selected');
       picker.hidden = true;
+      started = true;
       if (src !== currentSvgPath) {
         currentSvgPath = src;
         await switchImage(src);
@@ -815,22 +820,22 @@ async function switchImage(path) {
 }
 
 // 回転・リサイズ時は作り直し（塗りはリセットされる最小仕様）
+// ※ 最初の1枚を選ぶ前は何も作らない
 let resizeTimer = null;
 window.addEventListener('resize', () => {
+  if (!started) return;
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(setupCanvas, 200);
 });
 
 async function start() {
   const files = await loadImageList();
-  // 初期画像：fish.svg があればそれ、無ければ先頭
-  const initial = files.includes('fish.svg') ? 'fish.svg' : files[0];
-  currentSvgPath = 'images/' + initial;
+  currentSvgPath = undefined;   // まだ何も選んでいない
   buildPicker(files);
-  await switchImage(currentSvgPath);
+  picker.hidden = false;        // 起動時に「どのえで あそぶ？」の選択画面を出す
 }
 
 start().catch((err) => {
   console.error('初期化に失敗:', err);
-  alert('SVGの読み込みに失敗しました。ローカルサーバー経由で開いてください。');
+  alert('画像リストの読み込みに失敗しました。ローカルサーバー経由で開いてください。');
 });
