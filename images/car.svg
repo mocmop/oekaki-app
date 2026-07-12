@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect x="0" y="0" width="400" height="300" fill="white"/>
+
+  <!-- 車体 -->
+  <path d="M 45 205
+           L 45 165
+           C 45 152 55 150 70 150
+           L 130 150
+           L 160 108
+           L 245 108
+           L 275 150
+           L 340 150
+           C 350 150 355 152 355 165
+           L 355 205
+           Z"
+        fill="white" stroke="black" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- 窓（左） -->
+  <path d="M 152 148 L 168 118 L 200 118 L 200 148 Z"
+        fill="white" stroke="black" stroke-width="4" stroke-linejoin="round"/>
+  <!-- 窓（右） -->
+  <path d="M 210 118 L 240 118 L 256 148 L 210 148 Z"
+        fill="white" stroke="black" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- タイヤ -->
+  <circle cx="115" cy="205" r="34" fill="white" stroke="black" stroke-width="4"/>
+  <circle cx="115" cy="205" r="13" fill="white" stroke="black" stroke-width="4"/>
+  <circle cx="290" cy="205" r="34" fill="white" stroke="black" stroke-width="4"/>
+  <circle cx="290" cy="205" r="13" fill="white" stroke="black" stroke-width="4"/>
+</svg>

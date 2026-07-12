@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <!-- ピンチズーム無効化・拡大禁止 -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- ホーム画面追加で全画面（iOS Safari） -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="おえかき">
+  <title>おえかき＆ぬりえ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 上部バー：色（16色 横一列） -->
+    <div id="topbar">
+      <div id="palette">
+        <button class="swatch is-selected" style="--c:#e74c3c" data-color="#e74c3c" aria-label="あか"></button>
+        <button class="swatch" style="--c:#ff7675" data-color="#ff7675" aria-label="サーモン"></button>
+        <button class="swatch" style="--c:#e67e22" data-color="#e67e22" aria-label="オレンジ"></button>
+        <button class="swatch" style="--c:#f1c40f" data-color="#f1c40f" aria-label="きいろ"></button>
+        <button class="swatch" style="--c:#f9ca24" data-color="#f9ca24" aria-label="やまぶき"></button>
+        <button class="swatch" style="--c:#a3cb38" data-color="#a3cb38" aria-label="きみどり"></button>
+        <button class="swatch" style="--c:#2ecc71" data-color="#2ecc71" aria-label="みどり"></button>
+        <button class="swatch" style="--c:#16a085" data-color="#16a085" aria-label="ふかみどり"></button>
+        <button class="swatch" style="--c:#00cec9" data-color="#00cec9" aria-label="みずいろ"></button>
+        <button class="swatch" style="--c:#3498db" data-color="#3498db" aria-label="あお"></button>
+        <button class="swatch" style="--c:#0984e3" data-color="#0984e3" aria-label="こいあお"></button>
+        <button class="swatch" style="--c:#6c5ce7" data-color="#6c5ce7" aria-label="あおむらさき"></button>
+        <button class="swatch" style="--c:#9b59b6" data-color="#9b59b6" aria-label="むらさき"></button>
+        <button class="swatch" style="--c:#e84393" data-color="#e84393" aria-label="ピンク"></button>
+        <button class="swatch" style="--c:#8b4513" data-color="#8b4513" aria-label="ちゃいろ"></button>
+        <button class="swatch" style="--c:#2d3436" data-color="#2d3436" aria-label="くろ"></button>
+        <button class="swatch swatch--white" style="--c:#ffffff" data-color="#ffffff" aria-label="しろ"></button>
+      </div>
+    </div>
+
+    <!-- 本体：左＝どうぐ+ふとさ / 右＝キャンバス -->
+    <div id="body">
+      <!-- 左サイドバー -->
+      <div id="sidebar">
+        <!-- どうぐ（ぬり / ペン / けしごむ） -->
+        <div id="tools">
+          <button class="tool" data-mode="fill" aria-label="ぬり">🪣</button>
+          <button class="tool is-selected" data-mode="pen" aria-label="ペン">✏️</button>
+          <button class="tool" data-mode="eraser" aria-label="けしごむ">🧽</button>
+        </div>
+
+        <!-- ふとさ（縦スライダー・ペン/けしごむ共通） -->
+        <div id="size">
+          <span class="size-icon big">●</span>
+          <input id="sizeRange" type="range" min="2" max="80" value="28" step="1" aria-label="ふとさ">
+          <span class="size-icon">•</span>
+        </div>
+
+        <!-- え えらび -->
+        <button id="pickBtn" class="tool" aria-label="えをえらぶ">🖼️</button>
+        <!-- ほぞん -->
+        <button id="saveBtn" class="tool" aria-label="ほぞん">💾</button>
+      </div>
+
+      <!-- キャンバス（下＝色レイヤー / 上＝線画レイヤーの2層を重ねる） -->
+      <div id="stage">
+        <canvas id="colorLayer"></canvas>
+        <canvas id="lineLayer"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- え えらび（オーバーレイ）。中身は main.js が images/list.json から生成 -->
+  <div id="picker" hidden>
+    <div class="picker-panel"></div>
+  </div>
+
+  <!-- ほぞん（プレビュー）。iPadは画像を長押し→「写真に追加」 -->
+  <div id="saveModal" hidden>
+    <div class="save-panel">
+      <p class="save-hint">がぞうを ながおしして「しゃしんに ついか」</p>
+      <img id="saveImg" alt="できあがり">
+      <div class="save-actions">
+        <a id="saveDownload" class="save-btn" download>ダウンロード</a>
+        <button id="saveClose" class="save-btn">とじる</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>

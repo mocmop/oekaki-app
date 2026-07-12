@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect x="0" y="0" width="400" height="300" fill="white"/>
+
+  <!-- 星 -->
+  <path d="M 200 30
+           L 229.4 109.6
+           L 314.1 112.9
+           L 247.6 165.4
+           L 270.5 247.1
+           L 200 200
+           L 129.5 247.1
+           L 152.4 165.4
+           L 85.9 112.9
+           L 170.6 109.6
+           Z"
+        fill="white" stroke="black" stroke-width="4" stroke-linejoin="round"/>
+</svg>

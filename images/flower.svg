@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect x="0" y="0" width="400" height="300" fill="white"/>
+
+  <!-- 茎 -->
+  <path d="M 196 150 L 204 150 L 204 268 L 196 268 Z"
+        fill="white" stroke="black" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- 葉っぱ -->
+  <ellipse cx="165" cy="205" rx="34" ry="18" fill="white" stroke="black" stroke-width="4"/>
+  <ellipse cx="235" cy="230" rx="34" ry="18" fill="white" stroke="black" stroke-width="4"/>
+
+  <!-- 花びら（中心 200,110 の周り 6枚） -->
+  <circle cx="200" cy="62"  r="30" fill="white" stroke="black" stroke-width="4"/>
+  <circle cx="241.6" cy="86"  r="30" fill="white" stroke="black" stroke-width="4"/>
+  <circle cx="241.6" cy="134" r="30" fill="white" stroke="black" stroke-width="4"/>
+  <circle cx="200" cy="158" r="30" fill="white" stroke="black" stroke-width="4"/>
+  <circle cx="158.4" cy="134" r="30" fill="white" stroke="black" stroke-width="4"/>
+  <circle cx="158.4" cy="86"  r="30" fill="white" stroke="black" stroke-width="4"/>
+
+  <!-- 花の中心 -->
+  <circle cx="200" cy="110" r="30" fill="white" stroke="black" stroke-width="4"/>
+</svg>

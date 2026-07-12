@@ -1,0 +1,325 @@
+/* ===== 全画面・スクロール/拡大の暴発防止 ===== */
+* {
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;            /* pull-to-refresh / スクロール封じ */
+  overscroll-behavior: none;   /* 引っ張って更新の無効化 */
+  background: #f4f1ea;
+  touch-action: none;          /* ブラウザのジェスチャを止める */
+  font-family: -apple-system, sans-serif;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* iOS のノッチ回避 */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ===== 上部バー（16色 横一列） ===== */
+#topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+}
+
+/* ===== 本体（左＝どうぐ+ふとさ / 右＝キャンバス） ===== */
+#body {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+}
+
+/* ===== 左サイドバー ===== */
+#sidebar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 8px;
+  min-height: 0;
+}
+
+/* ===== どうぐ（縦並び） ===== */
+#tools {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.tool {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  border: 4px solid #fff;
+  background: #fff;
+  font-size: 32px;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  touch-action: none;
+  transition: transform .08s ease;
+}
+
+.tool.is-selected {
+  border-color: #333;
+  background: #ffeaa7;
+  transform: scale(1.1);
+}
+
+/* え えらびボタンは一番下に */
+#pickBtn {
+  margin-top: auto;
+  background: #eaf3ff;
+}
+
+/* ===== ふとさ（縦スライダー） ===== */
+#size {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 120px;
+}
+
+.size-icon {
+  color: #333;
+  line-height: 1;
+}
+.size-icon      { font-size: 13px; }
+.size-icon.big  { font-size: 26px; }
+
+#sizeRange {
+  -webkit-appearance: none;
+  appearance: none;
+  writing-mode: vertical-lr;   /* 縦向きスライダー */
+  direction: rtl;              /* 上=太い / 下=細い */
+  width: 11px;
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 100px;
+  max-height: 260px;
+  border-radius: 6px;
+  background: #ddd;
+  touch-action: auto;          /* スライダーのドラッグを許可 */
+  outline: none;
+}
+#sizeRange::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #333;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+#sizeRange::-moz-range-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #333;
+  border: 3px solid #fff;
+}
+
+/* ===== 色えらび（16色・横一列） ===== */
+#palette {
+  flex: 0 1 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.swatch {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: var(--c);
+  box-shadow: 0 2px 5px rgba(0,0,0,.25);
+  touch-action: none;
+  transition: transform .08s ease;
+}
+
+/* 白は白背景で見えにくいので枠を灰色に */
+.swatch--white {
+  border-color: #ccc;
+}
+
+.swatch.is-selected {
+  border-color: #333;
+  transform: scale(1.15);
+}
+
+/* ===== キャンバス領域 ===== */
+#stage {
+  flex: 1 1 auto;
+  position: relative;
+  margin: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* 2層を同じ位置に重ねる */
+#stage canvas {
+  position: absolute;
+  max-width: 100%;
+  max-height: 100%;
+  background: transparent;
+  touch-action: none;
+}
+
+/* 下＝色レイヤー、その下に白い下地を見せるため色レイヤー背景を白に */
+#colorLayer {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+
+/* ===== え えらび（オーバーレイ） ===== */
+#picker {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#picker[hidden] { display: none; }
+
+.picker-panel {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  width: min(92vw, 880px);
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;  /* iOS の慣性スクロール */
+  touch-action: pan-y;                /* 縦スクロールを許可 */
+  box-shadow: 0 8px 30px rgba(0,0,0,.35);
+}
+
+.pick {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  border: 4px solid #eee;
+  background: #fff;
+  padding: 4px;
+  touch-action: pan-y;
+}
+.pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.pick.is-selected {
+  border-color: #333;
+  background: #ffeaa7;
+}
+
+/* しろ紙タイル（線画なし） */
+.pick--blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #555;
+  background: repeating-linear-gradient(45deg, #fff, #fff 10px, #f2f2f2 10px, #f2f2f2 20px);
+}
+
+/* ===== ほぞん プレビュー ===== */
+#saveModal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#saveModal[hidden] { display: none; }
+
+.save-panel {
+  background: #fff;
+  border-radius: 20px;
+  padding: 16px;
+  max-width: 92vw;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.35);
+}
+
+.save-hint {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+#saveImg {
+  max-width: 82vw;
+  max-height: 66vh;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  /* iOSで長押し→写真に追加 を可能にする（全体の抑止を打ち消す） */
+  -webkit-touch-callout: default;
+  touch-action: auto;
+}
+
+.save-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  height: 52px;
+  padding: 0 20px;
+  border-radius: 14px;
+  border: 3px solid #333;
+  background: #ffeaa7;
+  color: #333;
+  font-size: 18px;
+  text-decoration: none;
+  touch-action: none;
+}
