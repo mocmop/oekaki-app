@@ -15,26 +15,41 @@
 </head>
 <body>
   <div id="app">
-    <!-- 上部バー：色（16色 横一列） -->
+    <!-- 上部バー：色（24色）＋ もよう -->
     <div id="topbar">
       <div id="palette">
         <button class="swatch is-selected" style="--c:#e74c3c" data-color="#e74c3c" aria-label="あか"></button>
+        <button class="swatch" style="--c:#c0392b" data-color="#c0392b" aria-label="こいあか"></button>
         <button class="swatch" style="--c:#ff7675" data-color="#ff7675" aria-label="サーモン"></button>
         <button class="swatch" style="--c:#e67e22" data-color="#e67e22" aria-label="オレンジ"></button>
+        <button class="swatch" style="--c:#d35400" data-color="#d35400" aria-label="こいオレンジ"></button>
+        <button class="swatch" style="--c:#f39c12" data-color="#f39c12" aria-label="やまぶき"></button>
         <button class="swatch" style="--c:#f1c40f" data-color="#f1c40f" aria-label="きいろ"></button>
-        <button class="swatch" style="--c:#f9ca24" data-color="#f9ca24" aria-label="やまぶき"></button>
+        <button class="swatch" style="--c:#f9ca24" data-color="#f9ca24" aria-label="レモン"></button>
         <button class="swatch" style="--c:#a3cb38" data-color="#a3cb38" aria-label="きみどり"></button>
         <button class="swatch" style="--c:#2ecc71" data-color="#2ecc71" aria-label="みどり"></button>
-        <button class="swatch" style="--c:#16a085" data-color="#16a085" aria-label="ふかみどり"></button>
+        <button class="swatch" style="--c:#27ae60" data-color="#27ae60" aria-label="ふかみどり"></button>
+        <button class="swatch" style="--c:#16a085" data-color="#16a085" aria-label="みどりあお"></button>
+        <button class="swatch" style="--c:#1abc9c" data-color="#1abc9c" aria-label="ターコイズ"></button>
         <button class="swatch" style="--c:#00cec9" data-color="#00cec9" aria-label="みずいろ"></button>
         <button class="swatch" style="--c:#3498db" data-color="#3498db" aria-label="あお"></button>
         <button class="swatch" style="--c:#0984e3" data-color="#0984e3" aria-label="こいあお"></button>
         <button class="swatch" style="--c:#6c5ce7" data-color="#6c5ce7" aria-label="あおむらさき"></button>
         <button class="swatch" style="--c:#9b59b6" data-color="#9b59b6" aria-label="むらさき"></button>
         <button class="swatch" style="--c:#e84393" data-color="#e84393" aria-label="ピンク"></button>
+        <button class="swatch" style="--c:#fd79a8" data-color="#fd79a8" aria-label="うすピンク"></button>
         <button class="swatch" style="--c:#8b4513" data-color="#8b4513" aria-label="ちゃいろ"></button>
+        <button class="swatch" style="--c:#7f8c8d" data-color="#7f8c8d" aria-label="はいいろ"></button>
         <button class="swatch" style="--c:#2d3436" data-color="#2d3436" aria-label="くろ"></button>
         <button class="swatch swatch--white" style="--c:#ffffff" data-color="#ffffff" aria-label="しろ"></button>
+      </div>
+
+      <!-- もよう（バケツ塗りの模様） -->
+      <div id="patterns">
+        <button class="pat pat--solid is-selected" data-pattern="solid" aria-label="べた"></button>
+        <button class="pat pat--dots" data-pattern="dots" aria-label="ドット"></button>
+        <button class="pat pat--stripes" data-pattern="stripes" aria-label="しま"></button>
+        <button class="pat pat--check" data-pattern="check" aria-label="いちまつ"></button>
       </div>
     </div>
 
@@ -48,6 +63,9 @@
           <button class="tool is-selected" data-mode="pen" aria-label="ペン">✏️</button>
           <button class="tool" data-mode="eraser" aria-label="けしごむ">🧽</button>
         </div>
+
+        <!-- もどる（元に戻す） -->
+        <button id="undoBtn" class="tool" aria-label="もどる">↩️</button>
 
         <!-- ふとさ（縦スライダー・ペン/けしごむ共通） -->
         <div id="size">

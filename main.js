@@ -29,6 +29,33 @@ let mode = 'pen';
 // ペン・けしごむ共通の太さ（CSS px 基準。実ピクセルでは dpr 倍する）
 let strokeWidthCss = 28;
 
+// バケツの模様: 'solid'(べた) / 'dots'(ドット) / 'stripes'(しま) / 'check'(いちまつ)
+let currentPattern = 'solid';
+
+// 模様の「インク部分」かどうか（true=現在色, false=白地）。座標は実ピクセル。
+function patternInk(x, y) {
+  const dpr = window.devicePixelRatio || 1;
+  switch (currentPattern) {
+    case 'dots': {
+      const T = Math.max(6, Math.round(18 * dpr)); // タイル間隔
+      const r = T * 0.30;                           // ドット半径
+      const cx = (x % T) - T / 2;
+      const cy = (y % T) - T / 2;
+      return (cx * cx + cy * cy) <= r * r;
+    }
+    case 'stripes': {
+      const S = Math.max(3, Math.round(10 * dpr));  // 縞の幅
+      return Math.floor((x + y) / S) % 2 === 0;     // 斜めストライプ
+    }
+    case 'check': {
+      const T = Math.max(4, Math.round(16 * dpr));  // 市松の升目
+      return (Math.floor(x / T) + Math.floor(y / T)) % 2 === 0;
+    }
+    default:
+      return true; // solid
+  }
+}
+
 // キャンバスの実ピクセルサイズ（= CSS px * dpr）
 let W = 0;
 let H = 0;
@@ -42,6 +69,10 @@ let colorImage = null;
 // にじませ(dilation)の重複訪問防止。世代スタンプで毎回クリア不要にする。
 let seen = null;
 let fillGen = 0;
+
+// もどる（元に戻す）用の履歴。色レイヤーのスナップショットを積む。
+const undoStack = [];
+const MAX_UNDO = 20;
 
 // 読み込んだ SVG 画像
 let svgImage = null;
@@ -153,6 +184,37 @@ function setupCanvas() {
   // にじませ用の訪問済みマップ
   seen = new Int32Array(W * H);
   fillGen = 0;
+
+  // キャンバスが作り直されたら履歴はリセット（サイズが変わるため）
+  undoStack.length = 0;
+  refreshUndoBtn();
+}
+
+// ------------------------------------------------------------
+// もどる（元に戻す）
+// ------------------------------------------------------------
+// 変更の直前に呼び、色レイヤーの現在状態を履歴に積む。
+function pushUndo() {
+  try {
+    undoStack.push(colorCtx.getImageData(0, 0, W, H));
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+    refreshUndoBtn();
+  } catch (_) { /* getImageData 失敗時は履歴を積まない */ }
+}
+
+function undo() {
+  if (!undoStack.length) return;
+  const prev = undoStack.pop();
+  colorCtx.putImageData(prev, 0, 0);
+  colorImage = prev; // 次のバケツ読み取り用に同期
+  refreshUndoBtn();
+}
+
+function refreshUndoBtn() {
+  if (!undoBtn) return;
+  const empty = undoStack.length === 0;
+  undoBtn.disabled = empty;
+  undoBtn.style.opacity = empty ? '0.35' : '1';
 }
 
 // ------------------------------------------------------------
@@ -179,6 +241,9 @@ function bucketFill(sx, sy, rgb) {
   // 既に同じ色なら何もしない
   if (ta === 255 && tr === nr && tg === ng && tb === nb) return;
 
+  // 変更が確定するので、直前の状態を履歴に積む
+  pushUndo();
+
   // このピクセルが「塗り替え対象の色」かどうか
   const matches = (i) => {
     if (wallMask[i]) return false;       // 壁は不可
@@ -196,6 +261,9 @@ function bucketFill(sx, sy, rgb) {
     data[p + 2] = nb;
     data[p + 3] = 255;
   };
+
+  // 本体で塗ったピクセル（にじみ分は含めない）。パターン適用に使う。
+  const region = [];
 
   // 塗った領域のうち「壁に接するピクセル」。線の下へにじませる起点。
   const edge = [];
@@ -245,6 +313,7 @@ function bucketFill(sx, sy, rgb) {
     while (x < W && matches(y * W + x)) {
       const i = y * W + x;
       paint(i);
+      region.push(i);
       pushIfEdge(i, x, y);
       pushIfPenEdge(i, x, y);
 
@@ -310,6 +379,20 @@ function bucketFill(sx, sy, rgb) {
       if (y < H - 1) tryFringe(i + W, next);
     }
     frontier = next;
+  }
+
+  // --- パターン適用：本体領域の「地」の部分を白に置き換える ---
+  // にじませ分(edge/penEdge)は単色のまま残し、白フチ・ペン縁対策を保つ。
+  if (currentPattern !== 'solid') {
+    for (let k = 0; k < region.length; k++) {
+      const i = region[k];
+      const x = i % W;
+      const y = (i / W) | 0;
+      if (!patternInk(x, y)) {
+        const p = i * 4;
+        data[p] = 255; data[p + 1] = 255; data[p + 2] = 255; data[p + 3] = 255;
+      }
+    }
   }
 
   colorCtx.putImageData(colorImage, 0, 0);
@@ -389,6 +472,8 @@ lineLayer.addEventListener('pointerdown', (e) => {
     return;
   }
   // ペン/けしごむ: 描き始め（点を1つ打つ）
+  // 1ストローク＝1手として、描き始めの直前を履歴に積む
+  pushUndo();
   lineLayer.setPointerCapture(e.pointerId);
   drawing = true;
   const [x, y] = toPixelF(e.clientX, e.clientY);
@@ -455,6 +540,18 @@ document.querySelectorAll('.swatch').forEach((btn) => {
 });
 
 // ------------------------------------------------------------
+// もよう選択（バケツの模様）
+// ------------------------------------------------------------
+document.querySelectorAll('.pat').forEach((btn) => {
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.pat').forEach(b => b.classList.remove('is-selected'));
+    btn.classList.add('is-selected');
+    currentPattern = btn.dataset.pattern;
+  });
+});
+
+// ------------------------------------------------------------
 // どうぐ切替（ぬり / ペン / けしごむ）。※ data-mode を持つボタンだけ
 // ------------------------------------------------------------
 document.querySelectorAll('.tool[data-mode]').forEach((btn) => {
@@ -465,6 +562,16 @@ document.querySelectorAll('.tool[data-mode]').forEach((btn) => {
     mode = btn.dataset.mode;
   });
 });
+
+// ------------------------------------------------------------
+// もどる（元に戻す）ボタン
+// ------------------------------------------------------------
+const undoBtn = document.getElementById('undoBtn');
+undoBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  undo();
+});
+refreshUndoBtn();
 
 // ------------------------------------------------------------
 // ふとさスライダー（ペン・けしごむ共通）
